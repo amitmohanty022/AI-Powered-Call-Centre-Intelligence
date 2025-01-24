@@ -6,18 +6,18 @@ This repository contains an AI-powered chatbot application built using **Streaml
 pip install -r requirements.txt
 
 ## Required Libraries
-python-dotenv – To manage environment variables.
-streamlit – For building the web app interface.
-langchain-google-genai – LangChain integration for Google Gemini AI.
-langchain – Framework for conversational AI workflows.
-pyttsx3 – Text-to-speech functionality.
-SpeechRecognition – For capturing and processing voice input.
-langsmith – Monitoring and tracing LangChain workflows.
-fastapi – For building the REST API.
-pydantic – For validating API request/response models.
-requests – For making HTTP requests to FastAPI.
-uvicorn – ASGI server for running FastAPI.
-
+- **python-dotenv** – To manage environment variables.
+- **streamlit** – For building the web app interface.
+- **langchain**-google-genai – LangChain integration for Google Gemini AI.
+- **langchain** – Framework for conversational AI workflows.
+- **pyttsx3** – Text-to-speech functionality.
+- **SpeechRecognition** – For capturing and processing voice input.
+- **langsmith** – Monitoring and tracing LangChain workflows.
+- **fastapi** – For building the REST API.
+- **pydantic** – For validating API request/response models.
+- **requests** – For making HTTP requests to FastAPI.
+- **uvicorn** – ASGI server for running FastAPI.
+---
 ## Features
 
 - **Conversational AI**: Integrates Google Generative AI (Gemini) for natural and intelligent responses.
@@ -45,8 +45,8 @@ Uses LangChain and Google Generative AI to process inputs and generate responses
 User-friendly interface for interaction.
 Handles voice and text input/output.
 - **Voice Assistant**
-  Speech-to-text**: Uses SpeechRecognition.
-  Text-to-speech**: Uses pyttsx3.
+  Speech-to-text: Uses SpeechRecognition.
+  Text-to-speech: Uses pyttsx3.
 - **Conversation Memory**
 Maintains session-level memory using LangChain's ConversationSummaryMemory.
 
