@@ -62,6 +62,6 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ## Contact
 For questions or support, contact:
 
-Amit Kumar Mohanty
-GitHub: @amitmohanty022
-Email: mohantyamit2003@gmail.com
+- *Amit Kumar Mohanty*
+- *GitHub: @amitmohanty022*
+- *Email: mohantyamit2003@gmail.com*
