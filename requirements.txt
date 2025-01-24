@@ -1,0 +1,11 @@
+python-dotenv
+streamlit
+langchain-google-genai
+langchain
+pyttsx3
+SpeechRecognition
+langsmith
+fastapi
+pydantic
+requests
+uvicorn

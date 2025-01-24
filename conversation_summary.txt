@@ -1,0 +1,1 @@
+The human greets the AI with repeated "hello"s, and the AI responds with a greeting.  The human then asks the AI its name, and the AI replies that it doesn't have one.
