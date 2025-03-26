@@ -9,11 +9,6 @@ import pyttsx3
 import speech_recognition as sr
 from langchain.agents import load_tools, initialize_agent, AgentType
 from langsmith import traceable
-from fastapi import FastAPI
-from pydantic import BaseModel
-import requests
-import threading
-import uvicorn
 
 # Load environment variables
 load_dotenv()
@@ -22,11 +17,8 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # LLM
 chat = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GOOGLE_API_KEY, temperature=0.7)
 
-# FastAPI Initialization
-app = FastAPI()
-
 # Prompt template
-prompt_template = """You are a helpful chatbot.
+prompt_template = """Respond to the following question as if you were a thoughtful and slightly witty human being. Keep your answer concise, creative, and easy to understand, as if you were talking to a friend.
 Current conversation:
 {history}
 Human: {input}
@@ -36,33 +28,6 @@ def create_conversation_chain():
     prompt = ChatPromptTemplate.from_template(prompt_template)
     memory = ConversationSummaryMemory(llm=chat, return_messages=True)
     return ConversationChain(llm=chat, prompt=prompt, memory=memory)
-
-# FastAPI Models
-class ChatRequest(BaseModel):
-    user_input: str
-
-class ChatResponse(BaseModel):
-    response: str
-
-@app.post("/chat", response_model=ChatResponse)
-def chat_api(request: ChatRequest):
-    conversation = create_conversation_chain()
-    response = conversation.predict(input=request.user_input)
-    return ChatResponse(response=response)
-
-# Function to call FastAPI endpoint
-def call_fastapi_endpoint(user_input: str):
-    url = "http://127.0.0.1:8001/chat"  # url FastAPI running
-    data = {"user_input": user_input}
-    
-    # Sending the POST request to FastAPI
-    response = requests.post(url, json=data)
-    
-    if response.status_code == 200:
-        return response.json().get('response', '')
-    else:
-        st.error("Failed to communicate with FastAPI.")
-        return None
 
 # Text-to-Speech Function
 def speak_text(text):
@@ -92,55 +57,53 @@ def recognize_speech():
 @traceable(project_name="chatbot")
 def main():
     st.title("AI Powered Chatbot")
-    conversation = create_conversation_chain()
-    tools = load_tools(["llm-math"], llm=chat)
-    agent = initialize_agent(tools, chat, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=False)
+    
+    # Add input for Gemini API Key
+    gemini_api_key = st.text_input("Enter your Gemini API Key:")
+    if gemini_api_key:
+        chat = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=gemini_api_key, temperature=0.7)
+        conversation = create_conversation_chain()
+        tools = load_tools(["llm-math"], llm=chat)
+        agent = initialize_agent(tools, chat, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=False)
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-    voice_assistant_active = st.checkbox("Activate Voice Assistant")
-    user_input = st.text_input("Type your query here or click the microphone to speak")
+        voice_assistant_active = st.checkbox("Activate Voice Assistant")
+        user_input = st.text_input("Type your query here or click the microphone to speak")
 
-    if st.button("🎙️ Speak"):
-        user_input = recognize_speech()
-
-    if user_input:
-        if user_input.lower() == "exit":
-            st.write("Goodbye!")
-            speak_text("Goodbye!")
-            return
-        elif user_input.lower().startswith("solve"):
-            bot_response = agent.run(user_input[5:])
-        else:
-            # Call the FastAPI endpoint
-            bot_response = call_fastapi_endpoint(user_input)
-            
-            if bot_response:
-                st.session_state.messages.append({"role": "user", "content": user_input})
-                st.session_state.messages.append({"role": "assistant", "content": bot_response})
-                st.chat_message("assistant").markdown(bot_response)
-                speak_text(bot_response)
-
-    # Fixed Voice Assistant Loop
-    if voice_assistant_active:
-        st.warning("Voice Assistant is Active. Speak to interact.")
-        while voice_assistant_active:
+        if st.button("🎙️ Speak"):
             user_input = recognize_speech()
-            if user_input:
-                bot_response = call_fastapi_endpoint(user_input)
+
+        if user_input:
+            if user_input.lower() == "exit":
+                st.write("Goodbye!")
+                speak_text("Goodbye!")
+                return
+            elif user_input.lower().startswith("solve"):
+                bot_response = agent.run(user_input[5:])
+            else:
+                # Directly use the conversation chain
+                bot_response = conversation.predict(input=user_input)
+                
                 if bot_response:
                     st.session_state.messages.append({"role": "user", "content": user_input})
                     st.session_state.messages.append({"role": "assistant", "content": bot_response})
                     st.chat_message("assistant").markdown(bot_response)
                     speak_text(bot_response)
 
-# Run FastAPI Server in a Separate Thread
-def run_fastapi():
-    uvicorn.run(app, host="0.0.0.0", port=8001)
-
-# Start FastAPI server in the background
-threading.Thread(target=run_fastapi, daemon=True).start()
+        # Fixed Voice Assistant Loop
+        if voice_assistant_active:
+            st.warning("Voice Assistant is Active. Speak to interact.")
+            while voice_assistant_active:
+                user_input = recognize_speech()
+                if user_input:
+                    bot_response = conversation.predict(input=user_input)
+                    if bot_response:
+                        st.session_state.messages.append({"role": "user", "content": user_input})
+                        st.session_state.messages.append({"role": "assistant", "content": bot_response})
+                        st.chat_message("assistant").markdown(bot_response)
+                        speak_text(bot_response)
 
 if __name__ == "__main__":
     main()
