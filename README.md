@@ -1,67 +1,61 @@
-# AI-Powered-Call-Centre-Intelligence
-AI-Powered Chatbot with Voice Assistant
-This repository contains an AI-powered chatbot application built using **Streamlit** for the frontend and **FastAPI** for the backend. The chatbot is powered by **Google Generative AI (Gemini)** via LangChain and features a voice assistant for speech-to-text and text-to-speech interaction.
+# AI-Powered Call Centre Intelligence
 
----
+A set of LLM-powered assistants for call-centre style conversations, built with **Streamlit**, **LangChain** and **Google Gemini**. It includes a web chatbot with spoken replies, a voice-driven customer-care agent with LangSmith tracing, a voice "therapist" with selectable personalities, and a symptom-to-advice chain.
+
+## 🔗 Live demo
+
+Not hosted yet. The web chatbot (`chatbot.py`) can be deployed for free on Streamlit Community Cloud: click the badge (or go to https://share.streamlit.io → **Create app**) and use repository `amitmohanty022/AI-Powered-Call-Centre-Intelligence`, branch `main`, main file `chatbot.py`.
+
+[![Deploy on Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=amitmohanty022/AI-Powered-Call-Centre-Intelligence&branch=main&mainModule=chatbot.py)
+
+Users type their own Gemini API key into the app, so no secrets are required. The voice apps (`talking_customer_care_langsmith.py`, `Brutal_Therapist.py`) use your computer's microphone and speakers, so run those locally.
+
+## What's inside
+
+| File | Type | What it does |
+| --- | --- | --- |
+| `chatbot.py` | Streamlit web app | Friendly, slightly witty chatbot with conversation memory; replies are read aloud with gTTS |
+| `talking_customer_care_langsmith.py` | Streamlit app (local) | Customer-support agent: describe the product problem, then chat by typing or by voice; answers are spoken with pyttsx3 and traced in LangSmith |
+| `Brutal_Therapist.py` | Voice CLI (local) | Pick a therapist personality (brutal, polite, arrogant) by voice and talk to it; collects feedback at the end |
+| `app.py` | CLI | Two-step LangChain (LCEL) chain: explains symptoms, then gives do's and don'ts |
+| `app3.py` | CLI | Health-report generator prototype |
+
+## Tech stack
+
+Python, Streamlit, LangChain (`langchain-core`, `langchain-google-genai`), Google Gemini 3.8 Flash, LangSmith, gTTS, pyttsx3, SpeechRecognition
+
+## Run locally
+
+```bash
+git clone https://github.com/amitmohanty022/AI-Powered-Call-Centre-Intelligence.git
+cd AI-Powered-Call-Centre-Intelligence
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
 
-## Required Libraries
-- **python-dotenv** – To manage environment variables.
-- **streamlit** – For building the web app interface.
-- **langchain**-google-genai – LangChain integration for Google Gemini AI.
-- **langchain** – Framework for conversational AI workflows.
-- **pyttsx3** – Text-to-speech functionality.
-- **SpeechRecognition** – For capturing and processing voice input.
-- **langsmith** – Monitoring and tracing LangChain workflows.
-- **fastapi** – For building the REST API.
-- **pydantic** – For validating API request/response models.
-- **requests** – For making HTTP requests to FastAPI.
-- **uvicorn** – ASGI server for running FastAPI.
----
-## Features
+Create a `.env` file:
 
-- **Conversational AI**: Integrates Google Generative AI (Gemini) for natural and intelligent responses.
-- **Voice Assistant**:
-  - Recognizes speech input using `speech_recognition`.
-  - Converts chatbot responses to audio using `pyttsx3`.
-- **Streamlit Frontend**: Provides an intuitive user interface for text and voice-based interaction.
-- **FastAPI Backend**: Efficient and lightweight REST API for chatbot processing.
-- **Math Solving Agent**: Supports solving math queries via LangChain tools.
-- **Traceable Conversations**: Tracks and summarizes chat history using LangSmith.
+```env
+GOOGLE_API_KEY=your_gemini_api_key        # https://aistudio.google.com/apikey
+GEMINI_MODEL=gemini-3.8-flash             # optional, this is the default
+LANGSMITH_API_KEY=your_langsmith_api_key  # optional, enables tracing in the customer-care app
+```
 
----
+Run an app:
 
-## Requirements
+```bash
+streamlit run chatbot.py                              # web chatbot
+streamlit run talking_customer_care_langsmith.py      # voice customer-care agent
+python Brutal_Therapist.py                            # voice therapist
+python app.py                                         # symptom chain (CLI)
+```
 
-### Libraries
-
-Ensure you have Python 3.8 or higher installed. Install the following libraries using `pip`:
-
-## Project Architecture
-- **Backend (FastAPI)**
-Handles chatbot queries via a REST API (/chat).
-Uses LangChain and Google Generative AI to process inputs and generate responses.
-- **Frontend (Streamlit)**
-User-friendly interface for interaction.
-Handles voice and text input/output.
-- **Voice Assistant**
-  Speech-to-text: Uses SpeechRecognition.
-  Text-to-speech: Uses pyttsx3.
-- **Conversation Memory**
-Maintains session-level memory using LangChain's ConversationSummaryMemory.
-
-## Future Enhancements
-Add multi-language support for voice input and output.
-Implement advanced error handling and retry mechanisms.
-Optimize voice assistant performance for long-running interactions.
-Add deployment instructions for Docker or cloud platforms (e.g., AWS, GCP).
+Voice input needs a microphone and PyAudio (`pip install pyaudio`; on Linux install `portaudio19-dev` first).
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+
+MIT. See [LICENSE](LICENSE).
 
 ## Contact
-For questions or support, contact:
 
-- *Amit Kumar Mohanty*
-- *GitHub: @amitmohanty022*
-- *Email: mohantyamit2003@gmail.com*
+**Amit Kumar Mohanty** · [GitHub @amitmohanty022](https://github.com/amitmohanty022) · mohantyamit2003@gmail.com

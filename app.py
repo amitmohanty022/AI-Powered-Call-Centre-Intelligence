@@ -1,14 +1,14 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser # Correct import
-from langchain.chains import SequentialChain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flashgemini-1.5-flash", api_key=GEMINI_API_KEY)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, api_key=GEMINI_API_KEY)
 
 
 
@@ -47,11 +47,11 @@ rating = int(input("\n                                     GIVE RATING TO DR. AM
 if rating >= 7:
     prompt= "Act as a true gentleman and say beautiful words and sentences like how beautiful you are,best person ever and more in a 3 line paragraph"
     response1 = llm.invoke(prompt)
-    print(response1.content)
+    print(response1.text)
 elif rating < 7:
     prompt2= "Roast me in the funniest way possible, but keep it light-hearted and friendly. Make sure it’s clever and not mean-spirited!"
     response2 = llm.invoke(prompt2)
-    print(response2.content)
+    print(response2.text)
 else:
     print("Neither thanks nor get lost.")
 print("\n THANKS FOR VISITING DR. AMIT MOHANTY MBBS                                                    YOUR BILL IS $1000 + TAX + GST ONLY ")

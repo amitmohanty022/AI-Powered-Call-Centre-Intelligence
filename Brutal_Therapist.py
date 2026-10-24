@@ -631,9 +631,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.memory import ConversationSummaryMemory
-from langchain.chains import ConversationChain
+from langchain_core.prompts import ChatPromptTemplate
 import pyttsx3
 import speech_recognition as sr
 import time
@@ -643,7 +641,8 @@ import re
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-chat = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY, temperature=0.7)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+chat = ChatGoogleGenerativeAI(model=GEMINI_MODEL, google_api_key=GOOGLE_API_KEY, temperature=0.7)
 
 persona_prompts = {
     "brutal": {
@@ -681,11 +680,15 @@ def create_conversation_chain(persona):
         raise ValueError(f"Invalid persona: {persona}")
 
     prompt = ChatPromptTemplate.from_template(prompt_data["template"])
-    memory = ConversationSummaryMemory(llm=chat, return_messages=True)
-    return ConversationChain(llm=chat, prompt=prompt, memory=memory)
+    # Replaces the removed ConversationChain + ConversationSummaryMemory:
+    # the chain plus a running transcript that is fed back in as {history}.
+    return {"chain": prompt | chat, "history": []}
 
 def get_response(conversation, user_input):
-    response = conversation.predict(input=user_input)
+    history_text = "\n".join(conversation["history"])
+    response = conversation["chain"].invoke({"history": history_text, "input": user_input}).text
+    conversation["history"].append(f"Human: {user_input}")
+    conversation["history"].append(f"AI: {response}")
     return response
 
 def speak_text(text):
@@ -743,7 +746,7 @@ def feedback_agent():
 
     # LLM to respond to feedback
     try:
-        response = chat.predict(input=f"User {name} provided the following feedback: {feedback}")
+        response = chat.invoke(f"User {name} provided the following feedback: {feedback}").text
         print(f"AI Response: {response}")
         speak_text(response)
     except Exception as e:
