@@ -39,7 +39,7 @@ def generate_health_report(health_condition, additional_details=""):
     
 
 
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+llm = ChatGoogleGenerativeAI(model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"), api_key=GEMINI_API_KEY)
 
 # Main execution
 def main():

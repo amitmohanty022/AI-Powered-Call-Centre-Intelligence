@@ -1,8 +1,7 @@
 import streamlit as st
 import os
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from langsmith import traceable
@@ -13,11 +12,12 @@ from queue import Queue
 import time
 import re
 
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = "customer_care_bot"
-
 load_dotenv()
-Langchain_api_key=os.environ["LANGCHAIN_API_KEY"]
+
+# LangSmith tracing is optional: it is only switched on when an API key is configured.
+if os.getenv("LANGSMITH_API_KEY") or os.getenv("LANGCHAIN_API_KEY"):
+    os.environ.setdefault("LANGSMITH_TRACING", "true")
+    os.environ.setdefault("LANGSMITH_PROJECT", "customer_care_bot")
 speech_queue = Queue()
 should_stop = False
 
@@ -45,11 +45,9 @@ speech_thread.start()
 # Initialize LLM
 llm = ChatGoogleGenerativeAI(
     temperature=0.7,
-    model="gemini-1.5-flash",
+    model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
     google_api_key=os.environ["GOOGLE_API_KEY"]
 )
-
-memory = ConversationBufferMemory()
 
 prompt = PromptTemplate(
     input_variables=["chat_history", "user_input", "product_problem"],
@@ -63,19 +61,16 @@ prompt = PromptTemplate(
     )
 )
 
-chain = LLMChain(
-    llm=llm,
-    prompt=prompt
-)
+chain = prompt | llm | StrOutputParser()
 
 
 @traceable(project_name="customer_care_bot")
 def run_chain(user_input, chat_history, product_problem):
-    return chain.run(
-        chat_history=chat_history,
-        user_input=user_input,
-        product_problem=product_problem
-    )
+    return chain.invoke({
+        "chat_history": chat_history,
+        "user_input": user_input,
+        "product_problem": product_problem,
+    })
 
 
 # Manage session state for speaking and recording
@@ -199,10 +194,10 @@ else:
             chat_history_text = "\n".join(
                 [f"User: {item['user']}\nAgent: {item['agent']}" for item in st.session_state["chat_history"]]
             )
-            response = chain.run(
-                chat_history=chat_history_text,
-                user_input=user_input,
-                product_problem=st.session_state["product_problem"]
+            response = run_chain(
+                user_input,
+                chat_history_text,
+                st.session_state["product_problem"],
             )
             st.session_state["chat_history"].append({"user": user_input, "agent": response.strip()})
             st.text_area("Agent's Response (Text):", value=response.strip(), disabled=True)
@@ -221,6 +216,5 @@ else:
     if st.button("Reset Chat"):
         st.session_state["product_problem"] = ""
         st.session_state["chat_history"] = []
-        memory.clear()
         stop_speech()
         st.success("Chat reset successfully!")
