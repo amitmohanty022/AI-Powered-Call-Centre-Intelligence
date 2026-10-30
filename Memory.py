@@ -1,26 +1,36 @@
-from langchain.chains import ConversationChain
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory, ConversationSummaryMemory
+"""English teacher chatbot in the terminal, showing LangChain conversation memory."""
+import os
+
+from dotenv import load_dotenv
+from langchain_classic.chains import ConversationChain
+from langchain_classic.memory import ConversationBufferWindowMemory, ConversationSummaryMemory
+from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# API
-chat = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key="AIzaSyCNEvYTmW-C0fe9PbGbMd_CCsUa0JaYKRg", temperature=0.7)
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
-# the prompt for the chatbot to act as an English teacher
+if not GOOGLE_API_KEY:
+    raise SystemExit("GOOGLE_API_KEY is not set. Copy .env.example to .env and paste your Gemini API key.")
+
+chat = ChatGoogleGenerativeAI(model=GEMINI_MODEL, google_api_key=GOOGLE_API_KEY, temperature=0.7)
+
+# The prompt for the chatbot to act as an English teacher
 prompt_template = PromptTemplate(
     input_variables=["history", "input"],
     template=(
         "You are an English teacher. Engage in a conversation to help improve the user's English."
         "Respond to their queries, correct their grammar, and provide examples if needed."
         "Conversation history:\n{history}\nUser: {input}\nTeacher:"
-    )
+    ),
 )
 
-# Set up memory modules
-buffer_memory = ConversationBufferMemory(k=2) # A buffer memory with a fixed length of 2 previous exchanges
+# Memory options: a window memory that keeps the last 2 exchanges, or a summary memory.
+buffer_memory = ConversationBufferWindowMemory(k=2)
 summary_memory = ConversationSummaryMemory(llm=chat)
 
-# Combine memory modules into a single conversation chain      /// Change buffer memory ,summary memory
+# Swap memory=buffer_memory for memory=summary_memory to try the other type.
 conversation = ConversationChain(
     llm=chat,
     prompt=prompt_template,
@@ -34,6 +44,5 @@ while True:
     if user_input.lower() in ["exit", "quit"]:
         print("Goodbye! Keep practicing your English.")
         break
-    # print(buffer_memory.chat_memory.messages)
-    response = conversation.run(input=user_input)
+    response = conversation.invoke({"input": user_input})["response"]
     print(f"Teacher: {response}")

@@ -1,67 +1,105 @@
-# AI-Powered-Call-Centre-Intelligence
-AI-Powered Chatbot with Voice Assistant
-This repository contains an AI-powered chatbot application built using **Streamlit** for the frontend and **FastAPI** for the backend. The chatbot is powered by **Google Generative AI (Gemini)** via LangChain and features a voice assistant for speech-to-text and text-to-speech interaction.
+# AI-Powered Call Centre Intelligence
 
----
+A set of AI chatbots built with **Streamlit**, **LangChain** and **Google Gemini**, including voice assistants (speech-to-text and text-to-speech) and LangSmith tracing.
+
+| File | What it is | How you use it |
+|---|---|---|
+| `talking_customer_care_langsmith.py` | Customer care bot with voice input/output and optional LangSmith tracing | Web app |
+| `chatbot.py` | Witty chatbot that remembers the conversation and speaks its replies | Web app |
+| `Brutal_Therapist.py` | Voice-only therapist bot with 3 personalities: brutal, polite, arrogant | Terminal + microphone |
+| `Memory.py` | English teacher bot that shows LangChain conversation memory | Terminal |
+| `app.py` | "Dr. Amit": symptoms in, causes/do's/don'ts out, then a rating | Terminal |
+| `app3.py` | Health report generator (summary, do's, don'ts) | Terminal |
+
+## How to run (step by step)
+
+You need **Python 3.10 or newer** ([download](https://www.python.org/downloads/)).
+
+**1. Download the project**
+
+```bash
+git clone https://github.com/amitmohanty022/AI-Powered-Call-Centre-Intelligence.git
+cd AI-Powered-Call-Centre-Intelligence
+```
+
+**2. Create a virtual environment and activate it**
+
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+```
+
+**3. Install the requirements**
+
+```bash
 pip install -r requirements.txt
+```
 
-## Required Libraries
-- **python-dotenv** – To manage environment variables.
-- **streamlit** – For building the web app interface.
-- **langchain**-google-genai – LangChain integration for Google Gemini AI.
-- **langchain** – Framework for conversational AI workflows.
-- **pyttsx3** – Text-to-speech functionality.
-- **SpeechRecognition** – For capturing and processing voice input.
-- **langsmith** – Monitoring and tracing LangChain workflows.
-- **fastapi** – For building the REST API.
-- **pydantic** – For validating API request/response models.
-- **requests** – For making HTTP requests to FastAPI.
-- **uvicorn** – ASGI server for running FastAPI.
----
-## Features
+> **If `PyAudio` fails to install** (needed for the microphone only):
+> - macOS: `brew install portaudio`, then run the command again
+> - Ubuntu/Debian: `sudo apt install portaudio19-dev espeak`, then run the command again
+> - Windows: it normally installs without extra steps
+>
+> The text-only scripts (`chatbot.py`, `Memory.py`, `app.py`, `app3.py`) work even if PyAudio fails.
 
-- **Conversational AI**: Integrates Google Generative AI (Gemini) for natural and intelligent responses.
-- **Voice Assistant**:
-  - Recognizes speech input using `speech_recognition`.
-  - Converts chatbot responses to audio using `pyttsx3`.
-- **Streamlit Frontend**: Provides an intuitive user interface for text and voice-based interaction.
-- **FastAPI Backend**: Efficient and lightweight REST API for chatbot processing.
-- **Math Solving Agent**: Supports solving math queries via LangChain tools.
-- **Traceable Conversations**: Tracks and summarizes chat history using LangSmith.
+**4. Add your Gemini API key**
 
----
+- Get a free key at https://aistudio.google.com/apikey
+- Copy `.env.example` to a new file named `.env`
+  - Windows: `copy .env.example .env`
+  - macOS / Linux: `cp .env.example .env`
+- Open `.env` and paste your key after `GOOGLE_API_KEY=`
+- Optional: add a LangSmith key after `LANGCHAIN_API_KEY=` to see traces at https://smith.langchain.com
 
-## Requirements
+**5. Run the app you want**
 
-### Libraries
+Web apps (your browser opens at http://localhost:8501):
 
-Ensure you have Python 3.8 or higher installed. Install the following libraries using `pip`:
+```bash
+streamlit run talking_customer_care_langsmith.py
+streamlit run chatbot.py
+```
 
-## Project Architecture
-- **Backend (FastAPI)**
-Handles chatbot queries via a REST API (/chat).
-Uses LangChain and Google Generative AI to process inputs and generate responses.
-- **Frontend (Streamlit)**
-User-friendly interface for interaction.
-Handles voice and text input/output.
-- **Voice Assistant**
-  Speech-to-text: Uses SpeechRecognition.
-  Text-to-speech: Uses pyttsx3.
-- **Conversation Memory**
-Maintains session-level memory using LangChain's ConversationSummaryMemory.
+Terminal apps:
 
-## Future Enhancements
-Add multi-language support for voice input and output.
-Implement advanced error handling and retry mechanisms.
-Optimize voice assistant performance for long-running interactions.
-Add deployment instructions for Docker or cloud platforms (e.g., AWS, GCP).
+```bash
+python app.py
+python app3.py
+python Memory.py            # type "exit" to quit
+python Brutal_Therapist.py  # say "brutal", "polite" or "arrogant", then talk; say "exit" to finish
+```
+
+## Settings
+
+| Variable in `.env` | Default | What it does |
+|---|---|---|
+| `GOOGLE_API_KEY` | (empty, required) | Gemini key |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | Gemini model used by every script |
+| `LANGCHAIN_API_KEY` | (empty, optional) | Turns on LangSmith tracing for the customer care bot |
+
+## Architecture
+
+- **LLM**: Google Gemini through `langchain-google-genai`.
+- **Memory**: conversation history kept in Streamlit session state, or LangChain memory classes in the terminal scripts.
+- **Voice**: `SpeechRecognition` (speech-to-text), `pyttsx3` (offline text-to-speech), `gTTS` (online text-to-speech in `chatbot.py`).
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "GOOGLE_API_KEY is not set" | Make sure the file is named exactly `.env` (not `.env.txt`) and is in the project folder. |
+| `streamlit: command not found` | Activate the virtual environment (step 2) first. |
+| No microphone / `PyAudio` error | See the note under step 3, or use the text-only scripts. |
+| `404 model not found` | Set `GEMINI_MODEL=gemini-3.6-flash` in `.env`. |
+| LangChain deprecation warnings | They are only warnings. The scripts still work. |
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+MIT. See [LICENSE](LICENSE).
 
 ## Contact
-For questions or support, contact:
-
 - *Amit Kumar Mohanty*
 - *GitHub: @amitmohanty022*
 - *Email: mohantyamit2003@gmail.com*
