@@ -383,7 +383,7 @@
 #         raise ValueError(f"Invalid persona: {persona}")
 
 #     prompt = ChatPromptTemplate.from_template(prompt_data["template"])
-#     memory = ConversationSummaryMemory(llm=chat, return_messages=True)
+#     memory = ConversationSummaryMemory(llm=chat)
 #     return ConversationChain(llm=chat, prompt=prompt, memory=memory)
 
 # def get_response(conversation, user_input):
@@ -550,7 +550,7 @@
 #         raise ValueError(f"Invalid persona: {persona}")
 
 #     prompt = ChatPromptTemplate.from_template(prompt_data["template"])
-#     memory = ConversationSummaryMemory(llm=chat, return_messages=True)
+#     memory = ConversationSummaryMemory(llm=chat)
 #     return ConversationChain(llm=chat, prompt=prompt, memory=memory)
 
 # def get_response(conversation, user_input):
@@ -631,9 +631,9 @@
 import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.memory import ConversationSummaryMemory
-from langchain.chains import ConversationChain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.chains import ConversationChain
 import pyttsx3
 import speech_recognition as sr
 import time
@@ -642,8 +642,12 @@ import re
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
-chat = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY, temperature=0.7)
+if not GOOGLE_API_KEY:
+    raise SystemExit("GOOGLE_API_KEY is not set. Copy .env.example to .env and paste your Gemini API key.")
+
+chat = ChatGoogleGenerativeAI(model=GEMINI_MODEL, google_api_key=GOOGLE_API_KEY, temperature=0.7)
 
 persona_prompts = {
     "brutal": {
@@ -681,12 +685,11 @@ def create_conversation_chain(persona):
         raise ValueError(f"Invalid persona: {persona}")
 
     prompt = ChatPromptTemplate.from_template(prompt_data["template"])
-    memory = ConversationSummaryMemory(llm=chat, return_messages=True)
+    memory = ConversationSummaryMemory(llm=chat)
     return ConversationChain(llm=chat, prompt=prompt, memory=memory)
 
 def get_response(conversation, user_input):
-    response = conversation.predict(input=user_input)
-    return response
+    return conversation.invoke({"input": user_input})["response"]
 
 def speak_text(text):
     try:
@@ -705,14 +708,17 @@ def recognize_speech():
     with sr.Microphone() as source:
         print("Listening...")
         r.adjust_for_ambient_noise(source)
-        audio = r.listen(source, timeout=10)
         try:
+            audio = r.listen(source, timeout=10)
             text = r.recognize_google(audio)
             if text:
                 print(f"You said: {text}")
                 return text
-        except sr.UnknownValueError:
+        except (sr.UnknownValueError, sr.WaitTimeoutError):
             print("Could not understand audio")
+            return None
+        except sr.RequestError as e:
+            print(f"Speech recognition service error: {e}")
             return None
 
 def select_personality_by_voice():
@@ -743,7 +749,7 @@ def feedback_agent():
 
     # LLM to respond to feedback
     try:
-        response = chat.predict(input=f"User {name} provided the following feedback: {feedback}")
+        response = chat.invoke(f"User {name} provided the following feedback: {feedback}").text
         print(f"AI Response: {response}")
         speak_text(response)
     except Exception as e:
